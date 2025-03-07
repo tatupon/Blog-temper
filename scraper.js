@@ -27,160 +27,246 @@
             .filter(src => src && src.startsWith('http')); // 有効なURLのみ
     };
     
-    // 構造選択モードを有効化する関数
-    window.BlogGen.Scraper.enableStructureSelectionMode = function(callback) {
-        console.log('構造選択モードを有効化');
+    // ページ内の潜在的な画像コンテナを見つける関数
+    window.BlogGen.Scraper.findPotentialImageContainers = function() {
+        console.log('潜在的な画像コンテナを検索中...');
+        const containers = [];
         
-        // 元のページの背景色と不透明度を保存
-        const originalBodyBg = document.body.style.backgroundColor;
-        const originalBodyOpacity = document.body.style.opacity;
-        
-        // ページの視認性を確保
-        document.body.style.backgroundColor = 'white';
-        document.body.style.opacity = '1';
-        
-        // オーバーレイの作成（完全に透明に）
-        const overlay = document.createElement('div');
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(0,0,0,0)'; // 完全に透明
-        overlay.style.zIndex = '9998';
-        overlay.style.pointerEvents = 'none'; // クリックイベントを下の要素に通過させる
-        document.body.appendChild(overlay);
-        
-        // 説明パネル（より目立つように）
-        const infoPanel = document.createElement('div');
-        infoPanel.style.position = 'fixed';
-        infoPanel.style.top = '10px';
-        infoPanel.style.left = '50%';
-        infoPanel.style.transform = 'translateX(-50%)';
-        infoPanel.style.backgroundColor = 'rgba(255,153,0,0.9)'; // Amazonカラー
-        infoPanel.style.color = 'white';
-        infoPanel.style.padding = '10px 20px';
-        infoPanel.style.borderRadius = '5px';
-        infoPanel.style.zIndex = '10001';
-        infoPanel.style.pointerEvents = 'none';
-        infoPanel.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
-        infoPanel.style.fontSize = '16px';
-        infoPanel.innerHTML = '<strong>画像コンテナ選択モード</strong>: 画像を含む要素にマウスを合わせて選択してください。ESCキーでキャンセル。';
-        document.body.appendChild(infoPanel);
-        
-        // ハイライト用要素（より目立つように）
-        const highlighter = document.createElement('div');
-        highlighter.style.position = 'absolute';
-        highlighter.style.border = '3px solid #ff9900'; // Amazonカラー
-        highlighter.style.backgroundColor = 'rgba(255,153,0,0.2)';
-        highlighter.style.zIndex = '9999';
-        highlighter.style.pointerEvents = 'none';
-        highlighter.style.boxShadow = '0 0 10px rgba(255,153,0,0.5)';
-        document.body.appendChild(highlighter);
-        
-        // ツールチップ
-        const tooltip = document.createElement('div');
-        tooltip.style.position = 'absolute';
-        tooltip.style.padding = '5px 10px';
-        tooltip.style.backgroundColor = 'black';
-        tooltip.style.color = 'white';
-        tooltip.style.borderRadius = '3px';
-        tooltip.style.fontSize = '12px';
-        tooltip.style.zIndex = '10000';
-        tooltip.style.pointerEvents = 'none';
-        document.body.appendChild(tooltip);
-        
-        // 状態管理
-        let currentElement = null;
-        
-        // マウスオーバーイベントの登録
-        function handleMouseMove(e) {
-            const target = e.target;
+        // Amazonサイトの場合、特定のセレクタを優先的に確認
+        if (window.location.hostname.includes('amazon')) {
+            console.log('Amazonサイトを検出、特定のコンテナを優先的に検索');
             
-            // 画像を含む要素のみハイライト
-            const hasImages = target.querySelectorAll('img').length > 0;
-            if (!hasImages) {
-                highlighter.style.display = 'none';
-                tooltip.style.display = 'none';
-                return;
-            }
+            // 商品ギャラリーの可能性のある要素セレクタ
+            const gallerySelectors = [
+                '#imageBlock', // 標準的な画像ブロック
+                '#altImages', // サムネイルコンテナ
+                '#imgTagWrapperId', // メイン画像コンテナ
+                '.a-dynamic-image-container', // 動的画像コンテナ
+                '.regularAltImageViewLayout', // 代替画像レイアウト
+                '#main-image-container', // メイン画像コンテナ（別バージョン）
+                '#imageBlockNew', // 新しい画像ブロック
+                '#image-block', // ハイフン区切りバージョン
+                '#dp-container' // 商品詳細ページコンテナ
+            ];
             
-            if (currentElement !== target) {
-                currentElement = target;
-                updateHighlighter(target);
-            }
-            
-            // ツールチップの位置更新
-            tooltip.style.display = 'block';
-            tooltip.style.left = (e.pageX + 10) + 'px';
-            tooltip.style.top = (e.pageY + 10) + 'px';
-        }
-        
-        function updateHighlighter(element) {
-            const rect = element.getBoundingClientRect();
-            highlighter.style.display = 'block';
-            highlighter.style.left = (window.scrollX + rect.left) + 'px';
-            highlighter.style.top = (window.scrollY + rect.top) + 'px';
-            highlighter.style.width = rect.width + 'px';
-            highlighter.style.height = rect.height + 'px';
-            
-            // 画像カウント
-            const images = element.querySelectorAll('img');
-            tooltip.textContent = `要素: ${element.tagName.toLowerCase()} | 画像: ${images.length}枚`;
-        }
-        
-        function handleClick(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const selectedElement = e.target;
-            const hasImages = selectedElement.querySelectorAll('img').length > 0;
-            
-            if (hasImages) {
-                const images = window.BlogGen.Scraper.extractImagesFromElement(selectedElement);
-                
-                // 選択モードを終了
-                cleanup();
-                
-                // コールバックで画像を返す
-                if (typeof callback === 'function') {
-                    callback(images);
+            // 各セレクタを試す
+            for (const selector of gallerySelectors) {
+                const element = document.querySelector(selector);
+                if (element) {
+                    const images = window.BlogGen.Scraper.extractImagesFromElement(element);
+                    if (images.length > 0) {
+                        console.log(`${selector}から${images.length}枚の画像を検出`);
+                        containers.push({
+                            element: element,
+                            imageCount: images.length,
+                            images: images,
+                            name: `Amazon商品ギャラリー (${selector})`
+                        });
+                    }
                 }
             }
         }
         
+        // 一般的な画像コンテナを検索（複数の画像を含む要素）
+        const potentialContainers = ['div', 'section', 'ul', 'figure', 'article', 'main'];
+        potentialContainers.forEach(tag => {
+            document.querySelectorAll(tag).forEach(el => {
+                // 既に追加済みのコンテナは除外
+                if (containers.some(c => c.element === el)) {
+                    return;
+                }
+                
+                const images = window.BlogGen.Scraper.extractImagesFromElement(el);
+                if (images.length >= 2) { // 2枚以上の画像を含む要素
+                    // 親要素が既に追加されている場合は除外（重複を避けるため）
+                    if (!containers.some(c => c.element.contains(el) || el.contains(c.element))) {
+                        containers.push({
+                            element: el,
+                            imageCount: images.length,
+                            images: images,
+                            name: `${el.tagName.toLowerCase()}要素 (${images.length}枚の画像)`
+                        });
+                    }
+                }
+            });
+        });
+        
+        // 画像数の多い順にソート
+        containers.sort((a, b) => b.imageCount - a.imageCount);
+        
+        // 最大10個のコンテナに制限
+        const result = containers.slice(0, 10);
+        console.log(`${result.length}個の潜在的な画像コンテナを検出`);
+        return result;
+    };
+    
+    // 画像コンテナ選択ダイアログを表示する関数
+    window.BlogGen.Scraper.showContainerSelectionDialog = function(containers, callback) {
+        console.log('画像コンテナ選択ダイアログを表示');
+        
+        // ダイアログのHTML構造
+        const dialog = document.createElement('div');
+        dialog.className = 'container-selection-dialog';
+        dialog.style.position = 'fixed';
+        dialog.style.top = '10%';
+        dialog.style.left = '10%';
+        dialog.style.width = '80%';
+        dialog.style.height = '80%';
+        dialog.style.backgroundColor = 'white';
+        dialog.style.zIndex = '99999';
+        dialog.style.borderRadius = '8px';
+        dialog.style.boxShadow = '0 0 20px rgba(0,0,0,0.5)';
+        dialog.style.overflow = 'auto';
+        dialog.style.padding = '20px';
+        
+        // タイトル
+        const title = document.createElement('h2');
+        title.textContent = '画像コンテナを選択';
+        title.style.marginBottom = '20px';
+        title.style.color = '#232f3e'; // Amazonカラー
+        dialog.appendChild(title);
+        
+        // 説明
+        const desc = document.createElement('p');
+        desc.textContent = '使用したい画像が含まれるコンテナを選択してください：';
+        dialog.appendChild(desc);
+        
+        // コンテナリスト
+        const list = document.createElement('div');
+        list.style.display = 'flex';
+        list.style.flexWrap = 'wrap';
+        list.style.gap = '20px';
+        
+        containers.forEach((container, index) => {
+            // コンテナごとのカード
+            const card = document.createElement('div');
+            card.style.border = '1px solid #ddd';
+            card.style.borderRadius = '4px';
+            card.style.padding = '10px';
+            card.style.width = 'calc(33% - 20px)';
+            card.style.minWidth = '280px';
+            card.style.cursor = 'pointer';
+            card.style.transition = 'all 0.2s ease';
+            
+            // ホバー効果
+            card.onmouseover = function() {
+                this.style.borderColor = '#ff9900';
+                this.style.boxShadow = '0 0 10px rgba(255,153,0,0.3)';
+            };
+            card.onmouseout = function() {
+                this.style.borderColor = '#ddd';
+                this.style.boxShadow = 'none';
+            };
+            
+            // カード内のコンテンツ
+            const header = document.createElement('div');
+            header.textContent = container.name || `コンテナ ${index + 1}（${container.imageCount}枚の画像）`;
+            header.style.fontWeight = 'bold';
+            header.style.marginBottom = '10px';
+            
+            // サムネイルプレビュー
+            const preview = document.createElement('div');
+            preview.style.display = 'flex';
+            preview.style.flexWrap = 'wrap';
+            preview.style.gap = '5px';
+            preview.style.margin = '10px 0';
+            preview.style.minHeight = '150px';
+            preview.style.maxHeight = '200px';
+            preview.style.overflow = 'hidden';
+            
+            // 最大5枚までサムネイル表示
+            container.images.slice(0, 5).forEach(src => {
+                const thumb = document.createElement('img');
+                thumb.src = src;
+                thumb.style.height = '70px';
+                thumb.style.objectFit = 'contain';
+                thumb.style.border = '1px solid #eee';
+                thumb.style.padding = '2px';
+                preview.appendChild(thumb);
+            });
+            
+            // 画像数表示
+            const count = document.createElement('div');
+            count.textContent = `合計: ${container.imageCount}枚の画像`;
+            count.style.fontSize = '12px';
+            count.style.color = '#666';
+            count.style.marginTop = '5px';
+            
+            // カードクリック時の処理
+            card.onclick = function() {
+                dialog.remove();
+                callback(container.images);
+            };
+            
+            card.appendChild(header);
+            card.appendChild(preview);
+            card.appendChild(count);
+            list.appendChild(card);
+        });
+        
+        dialog.appendChild(list);
+        
+        // 画像が見つからない場合のメッセージ
+        if (containers.length === 0) {
+            const noImages = document.createElement('p');
+            noImages.textContent = '画像を含むコンテナが見つかりませんでした。';
+            noImages.style.padding = '20px';
+            noImages.style.textAlign = 'center';
+            noImages.style.color = '#666';
+            dialog.appendChild(noImages);
+        }
+        
+        // ボタンコンテナ
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.marginTop = '20px';
+        buttonContainer.style.textAlign = 'center';
+        
+        // キャンセルボタン
+        const cancel = document.createElement('button');
+        cancel.textContent = 'キャンセル';
+        cancel.style.padding = '8px 16px';
+        cancel.style.background = '#f0f0f0';
+        cancel.style.border = '1px solid #ddd';
+        cancel.style.borderRadius = '4px';
+        cancel.style.cursor = 'pointer';
+        cancel.style.marginRight = '10px';
+        cancel.onclick = function() {
+            dialog.remove();
+            callback(null);
+        };
+        
+        buttonContainer.appendChild(cancel);
+        dialog.appendChild(buttonContainer);
+        document.body.appendChild(dialog);
+        
+        // ESCキーでキャンセル
         function handleKeyDown(e) {
-            // ESCキーでキャンセル
             if (e.key === 'Escape') {
-                cleanup();
-                if (typeof callback === 'function') {
-                    callback(null);
-                }
+                dialog.remove();
+                document.removeEventListener('keydown', handleKeyDown);
+                callback(null);
             }
         }
-        
-        function cleanup() {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('click', handleClick);
-            document.removeEventListener('keydown', handleKeyDown);
-            
-            // 追加した要素を削除
-            if (document.body.contains(overlay)) document.body.removeChild(overlay);
-            if (document.body.contains(highlighter)) document.body.removeChild(highlighter);
-            if (document.body.contains(tooltip)) document.body.removeChild(tooltip);
-            if (document.body.contains(infoPanel)) document.body.removeChild(infoPanel);
-            
-            // 元のスタイルを復元
-            document.body.style.backgroundColor = originalBodyBg;
-            document.body.style.opacity = originalBodyOpacity;
-            
-            console.log('構造選択モードを終了');
-        }
-        
-        // イベントリスナー登録
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('click', handleClick);
         document.addEventListener('keydown', handleKeyDown);
+    };
+    
+    // 構造選択モードを有効化する関数（ダイアログベースの新しいバージョン）
+    window.BlogGen.Scraper.enableStructureSelectionMode = function(callback) {
+        console.log('構造選択モード（ダイアログベース）を有効化');
+        
+        // 潜在的な画像コンテナを検索
+        const containers = window.BlogGen.Scraper.findPotentialImageContainers();
+        
+        // コンテナ選択ダイアログを表示
+        window.BlogGen.Scraper.showContainerSelectionDialog(containers, function(images) {
+            if (images && images.length > 0) {
+                console.log(`${images.length}枚の画像が選択されました`);
+                callback(images);
+            } else {
+                console.log('画像選択がキャンセルされました');
+                callback(null);
+            }
+        });
     };
     
     // メタディスクリプション取得
