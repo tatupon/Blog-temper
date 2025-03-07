@@ -428,7 +428,7 @@
     };
     
     // 結果表示
-    window.BlogGen.UI.showResult = function(htmlContent) {
+    window.BlogGen.UI.showResult = function(htmlContent, metaDescription) {
         console.log('結果表示処理開始'); // デバッグ用
         
         // マークダウンのHTMLブロックタグを除去する（```html と ``` を削除）
@@ -459,6 +459,70 @@
         container.style.position = 'relative';
         container.style.display = 'flex';
         container.style.flexDirection = 'column';
+        
+        // メタディスクリプション表示エリア
+        if (metaDescription) {
+            const metaDescArea = document.createElement('div');
+            metaDescArea.style.marginBottom = '15px';
+            metaDescArea.style.padding = '10px';
+            metaDescArea.style.backgroundColor = '#f8f9fa';
+            metaDescArea.style.border = '1px solid #ddd';
+            metaDescArea.style.borderRadius = '4px';
+            
+            const metaDescTitle = document.createElement('h3');
+            metaDescTitle.textContent = 'SEO メタディスクリプション';
+            metaDescTitle.style.margin = '0 0 10px 0';
+            metaDescTitle.style.fontSize = '16px';
+            metaDescTitle.style.color = '#333';
+            
+            const metaDescContent = document.createElement('div');
+            metaDescContent.textContent = metaDescription;
+            metaDescContent.style.fontFamily = 'monospace';
+            metaDescContent.style.padding = '10px';
+            metaDescContent.style.border = '1px solid #eee';
+            metaDescContent.style.borderRadius = '4px';
+            metaDescContent.style.backgroundColor = '#fff';
+            metaDescContent.style.fontSize = '14px';
+            metaDescContent.style.lineHeight = '1.5';
+            
+            // 文字数カウント表示
+            const charCount = document.createElement('div');
+            charCount.textContent = `文字数: ${metaDescription.length}文字`;
+            charCount.style.fontSize = '12px';
+            charCount.style.color = metaDescription.length <= 160 ? '#4CAF50' : '#f44336';
+            charCount.style.marginTop = '5px';
+            charCount.style.textAlign = 'right';
+            
+            // メタディスクリプションコピーボタン
+            const copyMetaBtn = document.createElement('button');
+            copyMetaBtn.textContent = 'メタディスクリプションをコピー';
+            copyMetaBtn.style.marginTop = '10px';
+            copyMetaBtn.style.padding = '5px 10px';
+            copyMetaBtn.style.backgroundColor = '#4CAF50';
+            copyMetaBtn.style.color = 'white';
+            copyMetaBtn.style.border = 'none';
+            copyMetaBtn.style.borderRadius = '4px';
+            copyMetaBtn.style.cursor = 'pointer';
+            
+            copyMetaBtn.onclick = function() {
+                navigator.clipboard.writeText(metaDescription).then(() => {
+                    copyMetaBtn.textContent = 'コピー完了!';
+                    setTimeout(() => {
+                        copyMetaBtn.textContent = 'メタディスクリプションをコピー';
+                    }, 2000);
+                }).catch(err => {
+                    alert('コピーに失敗しました');
+                    console.error('コピーエラー:', err);
+                });
+            };
+            
+            metaDescArea.appendChild(metaDescTitle);
+            metaDescArea.appendChild(metaDescContent);
+            metaDescArea.appendChild(charCount);
+            metaDescArea.appendChild(copyMetaBtn);
+            
+            container.appendChild(metaDescArea);
+        }
     
         // タブコンテナ
         const tabContainer = document.createElement('div');

@@ -31,7 +31,7 @@
                 messages: [
                     { role: 'user', content: prompt }
                 ],
-                system: "あなたは商品紹介ブログのHTML生成アシスタントです。与えられた情報から、WordPressに直接貼り付け可能なHTMLコードを生成してください。必ずHTML形式で出力し、マークダウンは使用しないでください。"
+                system: "あなたは商品紹介ブログのHTML生成アシスタントです。与えられた情報から、WordPressに直接貼り付け可能なHTMLコードを生成してください。必ずHTML形式で出力し、マークダウンは使用しないでください。SEO用メタディスクリプションも生成してください。"
             }),
             onload: function(response) {
                 if (response.status >= 400) {
@@ -42,27 +42,29 @@
                 
                 try {
                     const result = JSON.parse(response.responseText);
-                    let htmlContent = '';
+                    let responseText = '';
                     
                     if (result.content && Array.isArray(result.content) && result.content.length > 0) {
-                        htmlContent = result.content[0].text;
-                        
-                        // マークダウンのHTMLブロックタグを除去
-                        htmlContent = htmlContent.replace(/^```html\n/m, '')
-                                           .replace(/\n```$/m, '')
-                                           .trim();
+                        responseText = result.content[0].text;
                     } else if (result.completion) {
-                        htmlContent = result.completion;
-                        
-                        // マークダウンのHTMLブロックタグを除去
-                        htmlContent = htmlContent.replace(/^```html\n/m, '')
-                                           .replace(/\n```$/m, '')
-                                           .trim();
+                        responseText = result.completion;
                     } else {
                         throw new Error('APIから予期しない応答がありました');
                     }
                     
-                    if (onSuccess) onSuccess(htmlContent);
+                    // マークダウンのHTMLブロックタグを除去
+                    responseText = responseText.replace(/^```html\n/m, '')
+                                       .replace(/\n```$/m, '')
+                                       .trim();
+                    
+                    // メタディスクリプションと記事本文を分離
+                    const metaDescMatch = responseText.match(/\[META_DESCRIPTION\](.*?)\[\/META_DESCRIPTION\]/s);
+                    const metaDescription = metaDescMatch ? metaDescMatch[1].trim() : '';
+                    
+                    // メタタグを除去した記事本文
+                    let htmlContent = responseText.replace(/\[META_DESCRIPTION\].*?\[\/META_DESCRIPTION\]/s, '').trim();
+                    
+                    if (onSuccess) onSuccess(htmlContent, metaDescription);
                 } catch (error) {
                     console.error('応答パース失敗:', error, response.responseText);
                     if (onError) onError(error);

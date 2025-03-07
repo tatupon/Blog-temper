@@ -57,7 +57,7 @@
         const loading = window.BlogGen.Utils.createLoadingOverlay('記事を生成中...');
 
         // プロンプト構築
-        let prompt = `以下の情報からWordPress用のHTML形式ブログ記事を作成してください。
+        let prompt = `以下の情報からWordPress用のHTML形式ブログ記事とSEO用メタディスクリプションを作成してください。
 
 タイトル: ${data.title}
 URL: ${data.url}
@@ -75,13 +75,20 @@ URL: ${data.url}
 4. 商品の特徴をリスト形式で紹介
 5. 「購入する」ボタン（リンク先: ${data.url}）
 
+次の2つを出力してください:
+1. SEO用メタディスクリプション（160文字以内、検索表示に最適化）
+2. 完全なHTML形式の記事本文
+
+SEO用メタディスクリプションは、[META_DESCRIPTION]と[/META_DESCRIPTION]で囲んでください。
+その後に、HTML形式の記事本文を出力してください。
+
 必ずHTMLコードを出力してください。マークダウンではなく、完全なHTML形式で記事を作成してください。
 WordPressのHTMLエディタに直接貼り付けられるコードを生成してください。`;
 
         // APIリクエスト
         window.BlogGen.API.sendClaudeRequest(
             prompt,
-            function(htmlContent) {
+            function(htmlContent, metaDescription) {
                 // ローディング終了
                 loading.remove();
 
@@ -89,7 +96,7 @@ WordPressのHTMLエディタに直接貼り付けられるコードを生成し�
                 htmlContent = window.BlogGen.Affiliate.enhanceHtmlWithStyles(htmlContent);
 
                 // 結果表示
-                window.BlogGen.UI.showResult(htmlContent);
+                window.BlogGen.UI.showResult(htmlContent, metaDescription);
             },
             function(error) {
                 loading.remove();
@@ -123,7 +130,7 @@ WordPressのHTMLエディタに直接貼り付けられるコードを生成し�
         }
 
         // プロンプト構築
-        let prompt = `以下の情報からWordPress用のHTML形式ブログ記事を作成してください。
+        let prompt = `以下の情報からWordPress用のHTML形式ブログ記事とSEO用メタディスクリプションを作成してください。
 
 タイトル: ${data.title}
 URL: ${data.url}
@@ -147,13 +154,20 @@ URL: ${data.url}
 
         prompt += `
 
+次の2つを出力してください:
+1. SEO用メタディスクリプション（160文字以内、検索表示に最適化）
+2. 完全なHTML形式の記事本文
+
+SEO用メタディスクリプションは、[META_DESCRIPTION]と[/META_DESCRIPTION]で囲んでください。
+その後に、HTML形式の記事本文を出力してください。
+
 必ずHTMLコードを出力してください。マークダウンではなく、完全なHTML形式で記事を作成してください。
 WordPressのHTMLエディタに直接貼り付けられるコードを生成してください。`;
 
         // APIリクエスト
         window.BlogGen.API.sendClaudeRequest(
             prompt,
-            function(htmlContent) {
+            function(htmlContent, metaDescription) {
                 // ローディング終了
                 loading.remove();
 
@@ -161,7 +175,7 @@ WordPressのHTMLエディタに直接貼り付けられるコードを生成し�
                 htmlContent = window.BlogGen.Affiliate.enhanceHtmlWithStyles(htmlContent);
 
                 // 結果表示
-                window.BlogGen.UI.showResult(htmlContent);
+                window.BlogGen.UI.showResult(htmlContent, metaDescription);
             },
             function(error) {
                 loading.remove();
