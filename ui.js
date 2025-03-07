@@ -475,15 +475,20 @@
             metaDescTitle.style.fontSize = '16px';
             metaDescTitle.style.color = '#333';
             
-            const metaDescContent = document.createElement('div');
-            metaDescContent.textContent = metaDescription;
+            // テキストエリアでメタディスクリプションを表示（編集可能）
+            const metaDescContent = document.createElement('textarea');
+            metaDescContent.value = metaDescription;
             metaDescContent.style.fontFamily = 'monospace';
             metaDescContent.style.padding = '10px';
-            metaDescContent.style.border = '1px solid #eee';
+            metaDescContent.style.border = '1px solid #4CAF50';
             metaDescContent.style.borderRadius = '4px';
             metaDescContent.style.backgroundColor = '#fff';
             metaDescContent.style.fontSize = '14px';
             metaDescContent.style.lineHeight = '1.5';
+            metaDescContent.style.width = '100%';
+            metaDescContent.style.minHeight = '80px';
+            metaDescContent.style.resize = 'vertical';
+            metaDescContent.style.marginBottom = '5px';
             
             // 文字数カウント表示
             const charCount = document.createElement('div');
@@ -493,22 +498,54 @@
             charCount.style.marginTop = '5px';
             charCount.style.textAlign = 'right';
             
+            // 文字数カウントの更新関数
+            const updateCharCount = function() {
+                const currentLength = metaDescContent.value.length;
+                charCount.textContent = `文字数: ${currentLength}文字`;
+                charCount.style.color = currentLength <= 160 ? '#4CAF50' : '#f44336';
+            };
+            
+            // テキストエリアの入力イベント
+            metaDescContent.addEventListener('input', updateCharCount);
+            
+            // ボタンコンテナ
+            const metaBtnContainer = document.createElement('div');
+            metaBtnContainer.style.display = 'flex';
+            metaBtnContainer.style.gap = '10px';
+            metaBtnContainer.style.marginTop = '10px';
+            
+            // 全選択ボタン
+            const selectAllBtn = document.createElement('button');
+            selectAllBtn.textContent = '全選択';
+            selectAllBtn.style.padding = '5px 10px';
+            selectAllBtn.style.backgroundColor = '#2196F3';
+            selectAllBtn.style.color = 'white';
+            selectAllBtn.style.border = 'none';
+            selectAllBtn.style.borderRadius = '4px';
+            selectAllBtn.style.cursor = 'pointer';
+            selectAllBtn.style.flex = '1';
+            
+            selectAllBtn.onclick = function() {
+                metaDescContent.select();
+            };
+            
             // メタディスクリプションコピーボタン
             const copyMetaBtn = document.createElement('button');
-            copyMetaBtn.textContent = 'メタディスクリプションをコピー';
-            copyMetaBtn.style.marginTop = '10px';
+            copyMetaBtn.textContent = 'コピー';
             copyMetaBtn.style.padding = '5px 10px';
             copyMetaBtn.style.backgroundColor = '#4CAF50';
             copyMetaBtn.style.color = 'white';
             copyMetaBtn.style.border = 'none';
             copyMetaBtn.style.borderRadius = '4px';
             copyMetaBtn.style.cursor = 'pointer';
+            copyMetaBtn.style.flex = '1';
             
             copyMetaBtn.onclick = function() {
-                navigator.clipboard.writeText(metaDescription).then(() => {
+                metaDescContent.select();
+                navigator.clipboard.writeText(metaDescContent.value).then(() => {
                     copyMetaBtn.textContent = 'コピー完了!';
                     setTimeout(() => {
-                        copyMetaBtn.textContent = 'メタディスクリプションをコピー';
+                        copyMetaBtn.textContent = 'コピー';
                     }, 2000);
                 }).catch(err => {
                     alert('コピーに失敗しました');
@@ -516,10 +553,14 @@
                 });
             };
             
+            // ボタンをコンテナに追加
+            metaBtnContainer.appendChild(selectAllBtn);
+            metaBtnContainer.appendChild(copyMetaBtn);
+            
             metaDescArea.appendChild(metaDescTitle);
             metaDescArea.appendChild(metaDescContent);
             metaDescArea.appendChild(charCount);
-            metaDescArea.appendChild(copyMetaBtn);
+            metaDescArea.appendChild(metaBtnContainer);
             
             container.appendChild(metaDescArea);
         }
