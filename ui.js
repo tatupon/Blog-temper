@@ -14,7 +14,74 @@
         imagesLabel.style.display = 'block';
         imagesLabel.style.marginBottom = '10px';
         imagesLabel.style.fontWeight = 'bold';
-    
+        
+        // 画像コンテナ選択ボタン
+        const containerSelectBtn = document.createElement('button');
+        containerSelectBtn.textContent = '画像コンテナを選択';
+        containerSelectBtn.style.padding = '5px 10px';
+        containerSelectBtn.style.backgroundColor = '#ff9900'; // Amazonカラー
+        containerSelectBtn.style.color = 'white';
+        containerSelectBtn.style.border = 'none';
+        containerSelectBtn.style.borderRadius = '4px';
+        containerSelectBtn.style.cursor = 'pointer';
+        containerSelectBtn.style.marginLeft = '10px';
+        
+        // ボタンのホバー効果
+        containerSelectBtn.onmouseover = function() {
+            this.style.backgroundColor = '#e68a00';
+        };
+        containerSelectBtn.onmouseout = function() {
+            this.style.backgroundColor = '#ff9900';
+        };
+        
+        // ボタンクリック時の処理
+        containerSelectBtn.onclick = function() {
+            // エディタを一時的に非表示
+            const editorOverlay = container.parentElement.parentElement;
+            editorOverlay.style.display = 'none';
+            
+            // 構造選択モードを有効化
+            window.BlogGen.Scraper.enableStructureSelectionMode(function(images) {
+                // エディタを再表示
+                editorOverlay.style.display = 'flex';
+                
+                if (images && images.length > 0) {
+                    // 既存の画像コンテナをクリア
+                    while (imagesContainer.firstChild) {
+                        imagesContainer.removeChild(imagesContainer.firstChild);
+                    }
+                    
+                    // 選択された画像を表示
+                    selectedImages.clear();
+                    
+                    // 新しい画像を追加
+                    images.forEach((src, index) => {
+                        addImageToSelector(src, index);
+                    });
+                    
+                    // 選択状態を更新
+                    updateSelectionButtons();
+                }
+            });
+        };
+        
+        // ヘルプアイコン
+        const helpIcon = document.createElement('span');
+        helpIcon.textContent = ' ℹ️';
+        helpIcon.style.cursor = 'pointer';
+        helpIcon.title = 'Amazonなどのサイトで商品ギャラリーの画像を選択するには、このボタンをクリックして画像を含む要素を選択してください。';
+        
+        // ラベル行のコンテナ
+        const labelRow = document.createElement('div');
+        labelRow.style.display = 'flex';
+        labelRow.style.alignItems = 'center';
+        labelRow.style.marginBottom = '10px';
+        
+        // ラベル行に要素を追加
+        labelRow.appendChild(imagesLabel);
+        imagesLabel.appendChild(helpIcon);
+        labelRow.appendChild(containerSelectBtn);
+        
         const imagesContainer = document.createElement('div');
         imagesContainer.style.display = 'flex';
         imagesContainer.style.flexWrap = 'wrap';
@@ -22,85 +89,115 @@
         imagesContainer.style.marginBottom = '20px';
     
         const selectedImages = new Set();
+        
+        // 画像を選択UIに追加する関数
+        function addImageToSelector(src, index) {
+            // 改善されたイメージラッパー
+            const imgWrap = document.createElement('div');
+            imgWrap.style.position = 'relative';
+            imgWrap.style.width = '150px';
+            imgWrap.style.border = '1px solid #ccc';
+            imgWrap.style.padding = '5px';
+            imgWrap.style.textAlign = 'center';
+            imgWrap.style.cursor = 'pointer'; // カーソルをポインターに変更
+            imgWrap.style.backgroundColor = '#e6f7ff'; // デフォルトで選択状態の背景色
     
+            // 画像
+            const img = document.createElement('img');
+            img.src = src;
+            img.style.maxWidth = '100%';
+            img.style.height = '100px';
+            img.style.objectFit = 'contain';
+    
+            // チェックボックス
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = true; // デフォルトで選択
+            checkbox.style.marginTop = '5px';
+            checkbox.style.transform = 'scale(1.3)'; // チェックボックスを少し大きく
+            checkbox.style.cursor = 'pointer'; // カーソルをポインターに変更
+            selectedImages.add(src);
+    
+            // 視覚的なインジケーター追加
+            const selectionIndicator = document.createElement('div');
+            selectionIndicator.textContent = '✓ 選択中';
+            selectionIndicator.style.fontSize = '12px';
+            selectionIndicator.style.color = '#1890ff';
+            selectionIndicator.style.fontWeight = 'bold';
+            selectionIndicator.style.marginTop = '3px';
+    
+            // 共通のトグル機能
+            const toggleSelection = function() {
+                checkbox.checked = !checkbox.checked;
+                if (checkbox.checked) {
+                    selectedImages.add(src);
+                    imgWrap.style.backgroundColor = '#e6f7ff';
+                    selectionIndicator.style.display = 'block';
+                } else {
+                    selectedImages.delete(src);
+                    imgWrap.style.backgroundColor = 'transparent';
+                    selectionIndicator.style.display = 'none';
+                }
+            };
+    
+            // 画像ラッパーのクリックイベント
+            imgWrap.onclick = function(e) {
+                // チェックボックス自体のクリックの場合は、トグル関数を呼ばない
+                // (チェックボックスのデフォルト動作を妨げないため)
+                if (e.target !== checkbox) {
+                    e.preventDefault();
+                    toggleSelection();
+                }
+            };
+    
+            // チェックボックスのイベント
+            checkbox.onchange = function() {
+                if (this.checked) {
+                    selectedImages.add(src);
+                    imgWrap.style.backgroundColor = '#e6f7ff';
+                    selectionIndicator.style.display = 'block';
+                } else {
+                    selectedImages.delete(src);
+                    imgWrap.style.backgroundColor = 'transparent';
+                    selectionIndicator.style.display = 'none';
+                }
+            };
+    
+            // 要素の追加
+            imgWrap.appendChild(img);
+            imgWrap.appendChild(checkbox);
+            imgWrap.appendChild(selectionIndicator);
+            imagesContainer.appendChild(imgWrap);
+        }
+    
+        // 全選択/全解除ボタンの状態を更新する関数
+        function updateSelectionButtons() {
+            const checkboxes = imagesContainer.querySelectorAll('input[type="checkbox"]');
+            selectAllBtn.disabled = Array.from(checkboxes).every(cb => cb.checked);
+            deselectAllBtn.disabled = Array.from(checkboxes).every(cb => !cb.checked);
+            
+            // ボタンの視覚的な状態も更新
+            if (selectAllBtn.disabled) {
+                selectAllBtn.style.opacity = '0.5';
+                selectAllBtn.style.cursor = 'default';
+            } else {
+                selectAllBtn.style.opacity = '1';
+                selectAllBtn.style.cursor = 'pointer';
+            }
+            
+            if (deselectAllBtn.disabled) {
+                deselectAllBtn.style.opacity = '0.5';
+                deselectAllBtn.style.cursor = 'default';
+            } else {
+                deselectAllBtn.style.opacity = '1';
+                deselectAllBtn.style.cursor = 'pointer';
+            }
+        }
+        
+        // 初期画像の表示
         if (pageData.images && pageData.images.length > 0) {
             pageData.images.forEach((src, index) => {
-                // 改善されたイメージラッパー
-                const imgWrap = document.createElement('div');
-                imgWrap.style.position = 'relative';
-                imgWrap.style.width = '150px';
-                imgWrap.style.border = '1px solid #ccc';
-                imgWrap.style.padding = '5px';
-                imgWrap.style.textAlign = 'center';
-                imgWrap.style.cursor = 'pointer'; // カーソルをポインターに変更
-                imgWrap.style.backgroundColor = '#e6f7ff'; // デフォルトで選択状態の背景色
-    
-                // 画像
-                const img = document.createElement('img');
-                img.src = src;
-                img.style.maxWidth = '100%';
-                img.style.height = '100px';
-                img.style.objectFit = 'contain';
-    
-                // チェックボックス
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.checked = true; // デフォルトで選択
-                checkbox.style.marginTop = '5px';
-                checkbox.style.transform = 'scale(1.3)'; // チェックボックスを少し大きく
-                checkbox.style.cursor = 'pointer'; // カーソルをポインターに変更
-                selectedImages.add(src);
-    
-                // 視覚的なインジケーター追加
-                const selectionIndicator = document.createElement('div');
-                selectionIndicator.textContent = '✓ 選択中';
-                selectionIndicator.style.fontSize = '12px';
-                selectionIndicator.style.color = '#1890ff';
-                selectionIndicator.style.fontWeight = 'bold';
-                selectionIndicator.style.marginTop = '3px';
-    
-                // 共通のトグル機能
-                const toggleSelection = function() {
-                    checkbox.checked = !checkbox.checked;
-                    if (checkbox.checked) {
-                        selectedImages.add(src);
-                        imgWrap.style.backgroundColor = '#e6f7ff';
-                        selectionIndicator.style.display = 'block';
-                    } else {
-                        selectedImages.delete(src);
-                        imgWrap.style.backgroundColor = 'transparent';
-                        selectionIndicator.style.display = 'none';
-                    }
-                };
-    
-                // 画像ラッパーのクリックイベント
-                imgWrap.onclick = function(e) {
-                    // チェックボックス自体のクリックの場合は、トグル関数を呼ばない
-                    // (チェックボックスのデフォルト動作を妨げないため)
-                    if (e.target !== checkbox) {
-                        e.preventDefault();
-                        toggleSelection();
-                    }
-                };
-    
-                // チェックボックスのイベント
-                checkbox.onchange = function() {
-                    if (this.checked) {
-                        selectedImages.add(src);
-                        imgWrap.style.backgroundColor = '#e6f7ff';
-                        selectionIndicator.style.display = 'block';
-                    } else {
-                        selectedImages.delete(src);
-                        imgWrap.style.backgroundColor = 'transparent';
-                        selectionIndicator.style.display = 'none';
-                    }
-                };
-    
-                // 要素の追加
-                imgWrap.appendChild(img);
-                imgWrap.appendChild(checkbox);
-                imgWrap.appendChild(selectionIndicator);
-                imagesContainer.appendChild(imgWrap);
+                addImageToSelector(src, index);
             });
         } else {
             const noImgMsg = document.createElement('p');
@@ -132,35 +229,46 @@
     
         selectAllBtn.onclick = function() {
             const checkboxes = imagesContainer.querySelectorAll('input[type="checkbox"]');
+            const images = Array.from(imagesContainer.querySelectorAll('img')).map(img => img.src);
+            
             checkboxes.forEach((cb, i) => {
                 if (!cb.checked) {
                     cb.checked = true;
-                    selectedImages.add(pageData.images[i]);
+                    selectedImages.add(images[i]);
                     cb.parentElement.style.backgroundColor = '#e6f7ff';
                     cb.parentElement.querySelector('div').style.display = 'block';
                 }
             });
+            
+            updateSelectionButtons();
         };
     
         deselectAllBtn.onclick = function() {
             const checkboxes = imagesContainer.querySelectorAll('input[type="checkbox"]');
+            const images = Array.from(imagesContainer.querySelectorAll('img')).map(img => img.src);
+            
             checkboxes.forEach((cb, i) => {
                 if (cb.checked) {
                     cb.checked = false;
-                    selectedImages.delete(pageData.images[i]);
+                    selectedImages.delete(images[i]);
                     cb.parentElement.style.backgroundColor = 'transparent';
                     cb.parentElement.querySelector('div').style.display = 'none';
                 }
             });
+            
+            updateSelectionButtons();
         };
     
         buttonContainer.appendChild(selectAllBtn);
         buttonContainer.appendChild(deselectAllBtn);
     
         // コンテナに追加
-        container.appendChild(imagesLabel);
+        container.appendChild(labelRow);
         container.appendChild(buttonContainer);
         container.appendChild(imagesContainer);
+        
+        // 初期状態のボタン更新
+        updateSelectionButtons();
     
         return selectedImages;
     };

@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         アフィリエイトブログ生成ツール
+// @name         シンプル版アフィリエイトブログ生成ツール
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  Webページの内容をスクレイピングし、Claude APIを使用してブログ記事を生成します
 // @author       You
 // @match        *://*/*
@@ -10,11 +10,11 @@
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
 // @run-at       document-idle
-// @require      file://c:/Users/t-kikuchi/Blog-temper/utils.js
-// @require      file://c:/Users/t-kikuchi/Blog-temper/scraper.js
-// @require      file://c:/Users/t-kikuchi/Blog-temper/ui.js
-// @require      file://c:/Users/t-kikuchi/Blog-temper/api.js
-// @require      file://c:/Users/t-kikuchi/Blog-temper/affiliate.js
+// @require      https://raw.githubusercontent.com/tatupon/Blog-temper/main/utils.js?v=0.4
+// @require      https://raw.githubusercontent.com/tatupon/Blog-temper/main/scraper.js?v=0.4
+// @require      https://raw.githubusercontent.com/tatupon/Blog-temper/main/ui.js?v=0.4
+// @require      https://raw.githubusercontent.com/tatupon/Blog-temper/main/api.js?v=0.4
+// @require      https://raw.githubusercontent.com/tatupon/Blog-temper/main/affiliate.js?v=0.4
 // ==/UserScript==
 
 (function() {
