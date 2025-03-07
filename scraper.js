@@ -31,40 +31,51 @@
     window.BlogGen.Scraper.enableStructureSelectionMode = function(callback) {
         console.log('構造選択モードを有効化');
         
-        // オーバーレイの作成
+        // 元のページの背景色と不透明度を保存
+        const originalBodyBg = document.body.style.backgroundColor;
+        const originalBodyOpacity = document.body.style.opacity;
+        
+        // ページの視認性を確保
+        document.body.style.backgroundColor = 'white';
+        document.body.style.opacity = '1';
+        
+        // オーバーレイの作成（完全に透明に）
         const overlay = document.createElement('div');
         overlay.style.position = 'fixed';
         overlay.style.top = '0';
         overlay.style.left = '0';
         overlay.style.width = '100%';
         overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(0,0,0,0.3)';
+        overlay.style.backgroundColor = 'rgba(0,0,0,0)'; // 完全に透明
         overlay.style.zIndex = '9998';
         overlay.style.pointerEvents = 'none'; // クリックイベントを下の要素に通過させる
         document.body.appendChild(overlay);
         
-        // 説明パネル
+        // 説明パネル（より目立つように）
         const infoPanel = document.createElement('div');
         infoPanel.style.position = 'fixed';
         infoPanel.style.top = '10px';
         infoPanel.style.left = '50%';
         infoPanel.style.transform = 'translateX(-50%)';
-        infoPanel.style.backgroundColor = 'rgba(0,0,0,0.8)';
+        infoPanel.style.backgroundColor = 'rgba(255,153,0,0.9)'; // Amazonカラー
         infoPanel.style.color = 'white';
         infoPanel.style.padding = '10px 20px';
         infoPanel.style.borderRadius = '5px';
         infoPanel.style.zIndex = '10001';
         infoPanel.style.pointerEvents = 'none';
+        infoPanel.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
+        infoPanel.style.fontSize = '16px';
         infoPanel.innerHTML = '<strong>画像コンテナ選択モード</strong>: 画像を含む要素にマウスを合わせて選択してください。ESCキーでキャンセル。';
         document.body.appendChild(infoPanel);
         
-        // ハイライト用要素
+        // ハイライト用要素（より目立つように）
         const highlighter = document.createElement('div');
         highlighter.style.position = 'absolute';
-        highlighter.style.border = '2px solid red';
-        highlighter.style.backgroundColor = 'rgba(255,0,0,0.1)';
+        highlighter.style.border = '3px solid #ff9900'; // Amazonカラー
+        highlighter.style.backgroundColor = 'rgba(255,153,0,0.2)';
         highlighter.style.zIndex = '9999';
         highlighter.style.pointerEvents = 'none';
+        highlighter.style.boxShadow = '0 0 10px rgba(255,153,0,0.5)';
         document.body.appendChild(highlighter);
         
         // ツールチップ
@@ -152,10 +163,18 @@
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('click', handleClick);
             document.removeEventListener('keydown', handleKeyDown);
-            document.body.removeChild(overlay);
-            document.body.removeChild(highlighter);
-            document.body.removeChild(tooltip);
-            document.body.removeChild(infoPanel);
+            
+            // 追加した要素を削除
+            if (document.body.contains(overlay)) document.body.removeChild(overlay);
+            if (document.body.contains(highlighter)) document.body.removeChild(highlighter);
+            if (document.body.contains(tooltip)) document.body.removeChild(tooltip);
+            if (document.body.contains(infoPanel)) document.body.removeChild(infoPanel);
+            
+            // 元のスタイルを復元
+            document.body.style.backgroundColor = originalBodyBg;
+            document.body.style.opacity = originalBodyOpacity;
+            
+            console.log('構造選択モードを終了');
         }
         
         // イベントリスナー登録

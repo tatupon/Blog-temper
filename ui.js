@@ -36,16 +36,22 @@
         
         // ボタンクリック時の処理
         containerSelectBtn.onclick = function() {
-            // エディタを一時的に非表示
+            // エディタを一時的に非表示（display:noneではなくvisibility:hiddenを使用）
             const editorOverlay = container.parentElement.parentElement;
-            editorOverlay.style.display = 'none';
+            editorOverlay.style.visibility = 'hidden';
+            
+            console.log('画像コンテナ選択ボタンがクリックされました');
             
             // 構造選択モードを有効化
             window.BlogGen.Scraper.enableStructureSelectionMode(function(images) {
+                console.log('構造選択モードからの戻り値:', images ? images.length + '枚の画像' : 'キャンセル');
+                
                 // エディタを再表示
-                editorOverlay.style.display = 'flex';
+                editorOverlay.style.visibility = 'visible';
                 
                 if (images && images.length > 0) {
+                    console.log('取得した画像:', images);
+                    
                     // 既存の画像コンテナをクリア
                     while (imagesContainer.firstChild) {
                         imagesContainer.removeChild(imagesContainer.firstChild);
@@ -61,6 +67,8 @@
                     
                     // 選択状態を更新
                     updateSelectionButtons();
+                } else {
+                    console.log('画像が選択されなかったか、キャンセルされました');
                 }
             });
         };
